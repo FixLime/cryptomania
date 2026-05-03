@@ -1,0 +1,18 @@
+{
+  "name": "cryptomania",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["backend", "frontend", "bot"],
+  "scripts": {
+    "dev:backend": "npm run dev -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "dev:bot": "npm run dev -w bot",
+    "dev": "concurrently -n backend,bot,frontend -c blue,green,magenta \"npm:dev:backend\" \"npm:dev:bot\" \"npm:dev:frontend\"",
+    "build": "npm run build -w backend && npm run build -w frontend && npm run build -w bot",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:generate": "npm run db:generate -w backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

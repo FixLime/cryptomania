@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  FROZEN
+  BANNED
+}
+
+enum KycStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Currency {
+  TON
+  USDT_TON
+  USDT_TRC20
+  ETH
+  BTC
+}
+
+enum TxType {
+  DEPOSIT
+  WITHDRAWAL
+  INTERNAL
+  FEE
+}
+
+enum TxStatus {
+  PENDING
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
+  BROADCASTING
+  CONFIRMED
+  FAILED
+}
+
+model User {
+  id              String     @id @default(cuid())
+  telegramId      String     @unique
+  username        String?
+  firstName       String?
+  lastName        String?
+  languageCode    String?
+  status          UserStatus @default(ACTIVE)
+  kycStatus       KycStatus  @default(NONE)
+  isAdmin         Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  wallets         Wallet[]
+  transactions    Transaction[]
+  kycSubmissions  KycSubmission[]
+  auditLogs       AuditLog[]   @relation("ActorLogs")
+  targetedLogs    AuditLog[]   @relation("TargetLogs")
+
+  @@index([status])
+  @@index([kycStatus])
+}
+
+model Wallet {
+  id                  String   @id @default(cuid())
+  userId              String
+  currency            Currency
+  address             String
+  // Зашифрованный приватный ключ (AES-256-GCM): iv:tag:ciphertext в hex
+  encryptedPrivateKey String?
+  // Для производных адресов (HD): derivation path
+  derivationPath      String?
+  balance             Decimal  @default(0) @db.Decimal(40, 18)
+  // Замороженный баланс (в pending выводах)
+  lockedBalance       Decimal  @default(0) @db.Decimal(40, 18)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions        Transaction[]
+
+  @@unique([userId, currency])
+  @@unique([currency, address])
+  @@index([address])
+}
+
+model Transaction {
+  id              String    @id @default(cuid())
+  userId          String
+  walletId        String
+  type            TxType
+  status          TxStatus  @default(PENDING)
+  currency        Currency
+  amount          Decimal   @db.Decimal(40, 18)
+  fee             Decimal   @default(0) @db.Decimal(40, 18)
+  // Для депозитов — наш адрес, для выводов — куда отправляем
+  fromAddress     String?
+  toAddress       String?
+  txHash          String?   @unique
+  blockNumber     BigInt?
+  confirmations   Int       @default(0)
+  // ID админа, одобрившего вывод (если вывод требовал одобрения)
+  approvedById    String?
+  rejectedReason  String?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+  wallet          Wallet    @relation(fields: [walletId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([txHash])
+}
+
+model KycSubmission {
+  id            String    @id @default(cuid())
+  userId        String
+  status        KycStatus @default(PENDING)
+  fullName      String
+  documentType  String
+  documentNumber String
+  // Пути к загруженным файлам (passport фото + selfie)
+  documentPhotoPath String
+  selfiePhotoPath   String
+  reviewedById  String?
+  reviewedAt    DateTime?
+  rejectReason  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String?
+  targetUserId String?
+  action       String
+  entityType   String?
+  entityId     String?
+  metadata     Json?
+  ip           String?
+  createdAt    DateTime @default(now())
+
+  actor        User?    @relation("ActorLogs", fields: [actorId], references: [id])
+  targetUser   User?    @relation("TargetLogs", fields: [targetUserId], references: [id])
+
+  @@index([actorId, createdAt])
+  @@index([action])
+}
