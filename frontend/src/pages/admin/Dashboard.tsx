@@ -9,25 +9,27 @@ export function AdminDashboard() {
     api.adminStats().then(setStats).catch((e) => setErr(e.message));
   }, []);
 
-  if (err) return <div className="card" style={{color:'var(--destructive)'}}>{err}</div>;
-  if (!stats) return <div className="muted">Загрузка…</div>;
+  if (err) return <div className="empty" style={{color:'var(--destructive)'}}>{err}</div>;
+  if (!stats) return <div className="empty"><div className="text">Загрузка…</div></div>;
 
   const tiles = [
     { label: 'Пользователей', value: stats.users, icon: '👥' },
     { label: 'KYC на проверке', value: stats.pendingKyc, icon: '🪪' },
-    { label: 'Выводов на одобрение', value: stats.pendingWithdrawals, icon: '⏳' },
-    { label: 'Всего транзакций', value: stats.totalTxs, icon: '📊' },
+    { label: 'Выводов в очереди', value: stats.pendingWithdrawals, icon: '⏳' },
+    { label: 'Транзакций', value: stats.totalTxs, icon: '📊' },
   ];
 
   return (
-    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
-      {tiles.map((t) => (
-        <div className="card" key={t.label} style={{margin:0}}>
-          <div style={{fontSize:24}}>{t.icon}</div>
-          <div className="muted" style={{marginTop:6}}>{t.label}</div>
-          <div className="balance-big" style={{fontSize:24}}>{t.value}</div>
-        </div>
-      ))}
+    <div>
+      <div className="stats-grid">
+        {tiles.map((t) => (
+          <div className="stat-tile" key={t.label}>
+            <div className="ico">{t.icon}</div>
+            <div className="val">{t.value}</div>
+            <div className="lbl">{t.label}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

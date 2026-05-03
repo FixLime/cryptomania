@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
-import { currencyLabel } from '../components/CurrencyIcon';
+import { currencyLabel, currencyTicker } from '../components/CurrencyIcon';
 import {
   hapticImpact, hapticNotification, showAlert, showConfirm,
 } from '../lib/telegram';
@@ -21,12 +22,10 @@ export function Withdraw() {
   async function submit() {
     hapticImpact('medium');
     if (!toAddress || !amount) return showAlert('Заполните все поля');
-
     const ok = await showConfirm(
-      `Подтвердить вывод?\n\n${amount} ${currencyLabel(currency)}\n→ ${toAddress.slice(0, 20)}…`,
+      `Подтвердить отправку?\n\n${amount} ${currencyTicker(currency)}\n→ ${toAddress.slice(0, 24)}…`,
     );
     if (!ok) return;
-
     hapticImpact('heavy');
     setBusy(true);
     try {
@@ -34,14 +33,14 @@ export function Withdraw() {
       hapticNotification('success');
       showAlert(
         r.requiresApproval
-          ? 'Заявка отправлена. Сумма выше лимита — требуется одобрение администратора.'
-          : 'Вывод поставлен в очередь обработки.',
+          ? '✅ Заявка отправлена. Сумма выше лимита — требуется одобрение администратора.'
+          : '✅ Транзакция поставлена в очередь.',
       );
       setAmount('');
       setToAddress('');
     } catch (e: any) {
       hapticNotification('error');
-      showAlert(`Ошибка: ${e.message}`);
+      showAlert(`❌ ${e.message}`);
     } finally {
       setBusy(false);
     }
@@ -49,29 +48,36 @@ export function Withdraw() {
 
   return (
     <div>
-      <div className="title">Вывод средств</div>
+      <div className="page-header">
+        <Link to="/wallets" onClick={() => hapticImpact('light')} className="back">‹</Link>
+        <div className="title">Отправить</div>
+      </div>
 
-      <div className="card">
-        <div className="muted" style={{marginBottom:6}}>Валюта</div>
+      <div className="form-group">
+        <div className="form-label">Валюта</div>
         <select
           value={currency}
           onChange={(e) => { setCurrency(e.target.value); hapticImpact('light'); }}
         >
           {wallets.map((w) => (
             <option key={w.currency} value={w.currency}>
-              {currencyLabel(w.currency)} (баланс: {Number(w.balance).toFixed(6)})
+              {currencyLabel(w.currency)} — {Number(w.balance).toFixed(4)} {currencyTicker(w.currency)}
             </option>
           ))}
         </select>
+      </div>
 
-        <div className="muted" style={{marginTop:12, marginBottom:6}}>Адрес получателя</div>
+      <div className="form-group">
+        <div className="form-label">Адрес получателя</div>
         <input
           value={toAddress}
           onChange={(e) => setToAddress(e.target.value)}
-          placeholder="0x... / EQ... / T..."
+          placeholder="Вставьте адрес"
         />
+      </div>
 
-        <div className="muted" style={{marginTop:12, marginBottom:6}}>Сумма</div>
+      <div className="form-group">
+        <div className="form-label">Сумма</div>
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -80,21 +86,23 @@ export function Withdraw() {
         />
         {wallet && (
           <button
-            className="btn secondary"
-            style={{marginTop:8}}
+            className="btn ghost mt-8"
+            style={{justifyContent:'flex-start', padding:'8px 4px'}}
             onClick={() => { setAmount(wallet.balance); hapticImpact('light'); }}
           >
-            Использовать макс: {Number(wallet.balance).toFixed(6)}
+            Доступно: {Number(wallet.balance).toFixed(6)} {currencyTicker(currency)} → Макс
           </button>
         )}
       </div>
 
-      <button className="btn" disabled={busy} onClick={submit}>
-        {busy ? 'Обработка…' : '📤 Отправить'}
-      </button>
+      <div className="px-16 mt-16">
+        <button className="btn" disabled={busy} onClick={submit}>
+          {busy ? 'Отправка…' : 'Отправить'}
+        </button>
+      </div>
 
-      <div className="muted" style={{marginTop:12, textAlign:'center'}}>
-        ⚠️ Выводы возможны только после прохождения KYC.
+      <div className="muted center mt-16 px-16" style={{fontSize:12}}>
+        ⚠️ Требуется пройденная KYC-верификация
       </div>
     </div>
   );

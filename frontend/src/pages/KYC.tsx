@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { hapticImpact, hapticNotification, showAlert } from '../lib/telegram';
 
-const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
-  NONE: { text: 'Не пройдена', cls: 'gray' },
-  PENDING: { text: 'На проверке', cls: 'yellow' },
-  APPROVED: { text: 'Одобрена ✅', cls: 'green' },
-  REJECTED: { text: 'Отклонена', cls: 'red' },
+const STATUS: Record<string, { text: string; cls: string; ico: string }> = {
+  NONE: { text: 'Не пройдена', cls: 'gray', ico: '○' },
+  PENDING: { text: 'На проверке', cls: 'yellow', ico: '⏳' },
+  APPROVED: { text: 'Подтверждена', cls: 'green', ico: '✓' },
+  REJECTED: { text: 'Отклонена', cls: 'red', ico: '✕' },
 };
 
 export function KYC() {
@@ -29,7 +29,7 @@ export function KYC() {
   async function submit() {
     hapticImpact('medium');
     if (!fullName || !docNumber || !docFile || !selfieFile) {
-      return showAlert('Заполните все поля и загрузите оба файла.');
+      return showAlert('Заполните все поля и загрузите оба фото');
     }
     const fd = new FormData();
     fd.append('fullName', fullName);
@@ -41,7 +41,7 @@ export function KYC() {
     try {
       await api.kycSubmit(fd);
       hapticNotification('success');
-      showAlert('Заявка отправлена на проверку.');
+      showAlert('Заявка отправлена на проверку');
       await load();
     } catch (e: any) {
       hapticNotification('error');
@@ -51,52 +51,68 @@ export function KYC() {
     }
   }
 
-  const s = STATUS_LABEL[status] ?? STATUS_LABEL.NONE;
+  const s = STATUS[status] ?? STATUS.NONE;
   const canSubmit = status === 'NONE' || status === 'REJECTED';
 
   return (
     <div>
-      <div className="title">Верификация (KYC)</div>
-      <div className="card">
-        <div>Статус: <span className={`badge ${s.cls}`}>{s.text}</span></div>
+      <div className="page-title">Верификация</div>
+
+      <div className="section" style={{padding:20, textAlign:'center'}}>
+        <div style={{fontSize:48, marginBottom:8}}>{s.ico}</div>
+        <span className={`badge ${s.cls}`}>{s.text}</span>
         {latest?.rejectReason && (
-          <div className="muted" style={{marginTop:8, color:'var(--destructive)'}}>
+          <div className="muted mt-12" style={{color:'var(--destructive)'}}>
             Причина: {latest.rejectReason}
           </div>
         )}
+        {status === 'APPROVED' && (
+          <div className="muted mt-12">Вам доступны все функции кошелька</div>
+        )}
+        {status === 'PENDING' && (
+          <div className="muted mt-12">Обычно проверка занимает до 24 часов</div>
+        )}
       </div>
 
-      {!canSubmit && (
-        <div className="muted" style={{textAlign:'center', marginTop:16}}>
-          {status === 'PENDING' ? '⏳ Заявка на рассмотрении.' : '✅ Вы прошли верификацию.'}
-        </div>
-      )}
-
       {canSubmit && (
-        <div className="card">
-          <div className="muted" style={{marginBottom:6}}>ФИО (как в документе)</div>
-          <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Иванов Иван Иванович" />
+        <>
+          <div className="form-group">
+            <div className="form-label">ФИО как в документе</div>
+            <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Иванов Иван Иванович" />
+          </div>
 
-          <div className="muted" style={{marginTop:12, marginBottom:6}}>Тип документа</div>
-          <select value={docType} onChange={(e) => setDocType(e.target.value)}>
-            <option value="passport">Паспорт</option>
-            <option value="id_card">ID-карта</option>
-            <option value="driver_license">Водительское удостоверение</option>
-          </select>
+          <div className="form-group">
+            <div className="form-label">Тип документа</div>
+            <select value={docType} onChange={(e) => setDocType(e.target.value)}>
+              <option value="passport">Паспорт</option>
+              <option value="id_card">ID-карта</option>
+              <option value="driver_license">Водительское удостоверение</option>
+            </select>
+          </div>
 
-          <div className="muted" style={{marginTop:12, marginBottom:6}}>Номер документа</div>
-          <input value={docNumber} onChange={(e) => setDocNumber(e.target.value)} placeholder="1234 567890" />
+          <div className="form-group">
+            <div className="form-label">Номер документа</div>
+            <input value={docNumber} onChange={(e) => setDocNumber(e.target.value)} placeholder="0000 000000" />
+          </div>
 
-          <div className="muted" style={{marginTop:12, marginBottom:6}}>Фото документа</div>
-          <input type="file" accept="image/*" onChange={(e) => { setDocFile(e.target.files?.[0] ?? null); hapticImpact('light'); }} />
+          <div className="form-group">
+            <div className="form-label">Фото документа</div>
+            <input type="file" accept="image/*" onChange={(e) => { setDocFile(e.target.files?.[0] ?? null); hapticImpact('light'); }} />
+            {docFile && <div className="muted mt-8">✓ {docFile.name}</div>}
+          </div>
 
-          <div className="muted" style={{marginTop:12, marginBottom:6}}>Селфи с документом</div>
-          <input type="file" accept="image/*" capture="user" onChange={(e) => { setSelfieFile(e.target.files?.[0] ?? null); hapticImpact('light'); }} />
+          <div className="form-group">
+            <div className="form-label">Селфи с документом</div>
+            <input type="file" accept="image/*" capture="user" onChange={(e) => { setSelfieFile(e.target.files?.[0] ?? null); hapticImpact('light'); }} />
+            {selfieFile && <div className="muted mt-8">✓ {selfieFile.name}</div>}
+          </div>
 
-          <button className="btn" style={{marginTop:16}} disabled={busy} onClick={submit}>
-            {busy ? 'Отправка…' : 'Отправить на проверку'}
-          </button>
-        </div>
+          <div className="px-16 mt-16">
+            <button className="btn" disabled={busy} onClick={submit}>
+              {busy ? 'Отправка…' : 'Отправить на проверку'}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

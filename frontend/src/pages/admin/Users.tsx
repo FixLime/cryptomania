@@ -15,21 +15,31 @@ export function AdminUsers() {
 
   return (
     <div>
-      <div className="row" style={{gap:8}}>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск (telegram id / username)" />
-        <button className="btn secondary" style={{width:'auto'}} onClick={() => { hapticImpact('light'); load(); }}>🔍</button>
+      <div className="form-group">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && load()}
+          placeholder="🔍 Поиск (id / username)"
+        />
       </div>
-      <div style={{marginTop:12}}>
+      <div className="section">
         {users.map((u) => (
-          <Link key={u.id} to={`/admin/users/${u.id}`} onClick={() => hapticImpact('light')} style={{textDecoration:'none', color:'inherit'}}>
-            <div className="card">
-              <div style={{fontWeight:600}}>@{u.username ?? u.telegramId}</div>
-              <div className="muted">TG: {u.telegramId}</div>
-              <div className="row" style={{marginTop:6, gap:6}}>
-                <span className={`badge ${u.status === 'ACTIVE' ? 'green' : u.status === 'FROZEN' ? 'yellow' : 'red'}`}>{u.status}</span>
-                <span className={`badge ${u.kycStatus === 'APPROVED' ? 'green' : 'gray'}`}>KYC: {u.kycStatus}</span>
-                {u.isAdmin && <span className="badge yellow">ADMIN</span>}
+          <Link key={u.id} to={`/admin/users/${u.id}`} onClick={() => hapticImpact('light')} style={{textDecoration:'none', color:'inherit', display:'block'}}>
+            <div className="row">
+              <div className="icon" style={{background:'var(--accent)', fontSize:18}}>
+                {u.firstName?.[0] ?? '?'}
               </div>
+              <div className="body">
+                <div className="title">@{u.username ?? u.telegramId}</div>
+                <div className="sub">
+                  <span className={`badge ${u.status === 'ACTIVE' ? 'green' : u.status === 'FROZEN' ? 'yellow' : 'red'}`}>{u.status}</span>
+                  {' '}
+                  <span className={`badge ${u.kycStatus === 'APPROVED' ? 'green' : 'gray'}`}>{u.kycStatus}</span>
+                  {u.isAdmin && <> <span className="badge blue">ADMIN</span></>}
+                </div>
+              </div>
+              <div className="chevron">›</div>
             </div>
           </Link>
         ))}

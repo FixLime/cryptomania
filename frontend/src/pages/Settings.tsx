@@ -12,27 +12,40 @@ export function Settings() {
 
   return (
     <div>
-      <div className="title">Настройки</div>
+      <div className="page-title">Профиль</div>
 
-      <div className="card">
-        <div className="muted">Telegram ID</div>
-        <div style={{fontWeight:600}}>{user?.telegramId}</div>
-        {user?.username && (
-          <>
-            <div className="muted" style={{marginTop:8}}>Username</div>
-            <div style={{fontWeight:600}}>@{user.username}</div>
-          </>
-        )}
-        <div className="muted" style={{marginTop:8}}>Статус аккаунта</div>
-        <div style={{fontWeight:600}}>{user?.status}</div>
-        <div className="muted" style={{marginTop:8}}>KYC</div>
-        <div style={{fontWeight:600}}>{user?.kycStatus}</div>
+      <div className="section">
+        <div className="row" style={{cursor:'default'}}>
+          <div className="icon" style={{background:'var(--accent)', fontSize:20}}>
+            {user?.firstName?.[0] ?? '?'}
+          </div>
+          <div className="body">
+            <div className="title">{user?.firstName} {user?.lastName}</div>
+            <div className="sub">{user?.username ? `@${user.username}` : `ID: ${user?.telegramId}`}</div>
+          </div>
+        </div>
       </div>
 
-      <div className="card">
-        <div className="subtitle" style={{margin:'0 0 12px'}}>Подключить внешний TON-кошелёк</div>
+      <div className="section-title">Аккаунт</div>
+      <div className="section">
+        <div className="row" style={{cursor:'default'}}>
+          <div className="body">
+            <div className="title">Статус</div>
+          </div>
+          <span className={`badge ${user?.status === 'ACTIVE' ? 'green' : 'yellow'}`}>{user?.status}</span>
+        </div>
+        <div className="row" style={{cursor:'default'}}>
+          <div className="body">
+            <div className="title">KYC</div>
+          </div>
+          <span className={`badge ${user?.kycStatus === 'APPROVED' ? 'green' : 'gray'}`}>{user?.kycStatus}</span>
+        </div>
+      </div>
+
+      <div className="section-title">Внешний кошелёк</div>
+      <div className="section" style={{padding:16}}>
         <div className="muted" style={{marginBottom:12, fontSize:13}}>
-          Опционально: можно подключить Tonkeeper / MyTonWallet для подписи транзакций со своего устройства.
+          Подключите Tonkeeper или MyTonWallet для подписи транзакций
         </div>
         <div onClick={() => hapticImpact('light')}>
           <TonConnectButton />
@@ -40,13 +53,26 @@ export function Settings() {
       </div>
 
       {user?.isAdmin && (
-        <div className="card" style={{borderColor:'var(--accent)'}}>
-          <div className="subtitle" style={{margin:0}}>🛡 Вы администратор</div>
-          <a href="#/admin" onClick={() => hapticImpact('medium')}>
-            <button className="btn" style={{marginTop:12}}>Открыть админ-панель</button>
+        <>
+          <div className="section-title">Администрирование</div>
+          <a href="#/admin" onClick={() => hapticImpact('medium')} style={{display:'block'}}>
+            <div className="section">
+              <div className="row">
+                <div className="icon" style={{background:'#ec3942'}}>🛡</div>
+                <div className="body">
+                  <div className="title">Админ-панель</div>
+                  <div className="sub">KYC, выводы, пользователи</div>
+                </div>
+                <div className="chevron">›</div>
+              </div>
+            </div>
           </a>
-        </div>
+        </>
       )}
+
+      <div className="muted center mt-24" style={{fontSize:12, padding:'0 16px'}}>
+        CryptoMania Wallet • v0.1
+      </div>
     </div>
   );
 }

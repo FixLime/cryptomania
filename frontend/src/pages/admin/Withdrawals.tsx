@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
-import { currencyLabel } from '../../components/CurrencyIcon';
+import { currencyTicker } from '../../components/CurrencyIcon';
 import { hapticImpact, hapticNotification } from '../../lib/telegram';
 
 export function AdminWithdrawals() {
   const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
+    setLoading(true);
     const r = await api.adminWithdrawals();
     setItems(r.transactions);
+    setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
@@ -28,26 +31,28 @@ export function AdminWithdrawals() {
     await load();
   }
 
+  if (loading) return <div className="empty"><div className="text">Загрузка…</div></div>;
+  if (items.length === 0) return (
+    <div className="empty">
+      <div className="ico">✓</div>
+      <div className="text">Очередь пуста</div>
+    </div>
+  );
+
   return (
     <div>
-      <div className="subtitle" style={{marginTop:0}}>Выводы на одобрение</div>
-      {items.length === 0 && <div className="muted">Очередь пуста.</div>}
       {items.map((t) => (
-        <div className="card" key={t.id}>
-          <div style={{fontWeight:600, fontSize:18}}>
-            {t.amount} {currencyLabel(t.currency)}
+        <div className="section" key={t.id} style={{padding:16}}>
+          <div style={{fontWeight:700, fontSize:20}}>
+            {t.amount} {currencyTicker(t.currency)}
           </div>
-          <div className="muted" style={{marginTop:4}}>
-            от @{t.user.username ?? t.user.telegramId}
-          </div>
-          <div className="muted" style={{marginTop:6}}>На адрес:</div>
+          <div className="muted mt-8">от @{t.user.username ?? t.user.telegramId}</div>
+          <div className="muted mt-12" style={{fontSize:12}}>На адрес:</div>
           <div className="address">{t.toAddress}</div>
-          <div className="muted" style={{marginTop:6}}>
-            {new Date(t.createdAt).toLocaleString('ru-RU')}
-          </div>
-          <div className="row" style={{marginTop:12, gap:8}}>
-            <button className="btn success" onClick={() => approve(t.id)}>✅ Одобрить</button>
-            <button className="btn danger" onClick={() => reject(t.id)}>❌ Отклонить</button>
+          <div className="muted mt-8">{new Date(t.createdAt).toLocaleString('ru-RU')}</div>
+          <div className="btn-row mt-12" style={{padding:0}}>
+            <button className="btn success" onClick={() => approve(t.id)}>✓ Одобрить</button>
+            <button className="btn danger" onClick={() => reject(t.id)}>✕ Отклонить</button>
           </div>
         </div>
       ))}

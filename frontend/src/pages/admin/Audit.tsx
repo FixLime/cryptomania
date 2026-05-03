@@ -10,22 +10,21 @@ export function AdminAudit() {
 
   return (
     <div>
-      <div className="subtitle" style={{marginTop:0}}>Журнал аудита</div>
-      {logs.map((l) => (
-        <div className="card" key={l.id}>
-          <div style={{fontWeight:600}}>{l.action}</div>
-          <div className="muted" style={{marginTop:4}}>
-            {new Date(l.createdAt).toLocaleString('ru-RU')}
+      <div className="section">
+        {logs.map((l) => (
+          <div className="tx-item" key={l.id}>
+            <div className="ico" style={{background:'rgba(64,167,227,0.18)', color:'var(--accent)'}}>📜</div>
+            <div className="body">
+              <div className="title">{l.action}</div>
+              <div className="sub">
+                {new Date(l.createdAt).toLocaleString('ru-RU')}
+                {l.actor && ` • @${l.actor.username ?? l.actor.telegramId}`}
+                {l.targetUser && ` → @${l.targetUser.username ?? l.targetUser.telegramId}`}
+              </div>
+            </div>
           </div>
-          {l.actor && <div className="muted">Actor: @{l.actor.username ?? l.actor.telegramId}</div>}
-          {l.targetUser && <div className="muted">Target: @{l.targetUser.username ?? l.targetUser.telegramId}</div>}
-          {l.metadata && (
-            <pre style={{fontSize:11, overflow:'auto', margin:'8px 0 0', color:'var(--hint)'}}>
-              {JSON.stringify(l.metadata, null, 2)}
-            </pre>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

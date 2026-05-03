@@ -1,34 +1,32 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { hapticSelection } from './lib/telegram';
 
+const TABS = [
+  { to: '/wallets', icon: '💼', label: 'Кошелёк' },
+  { to: '/history', icon: '🕐', label: 'История' },
+  { to: '/kyc', icon: '🪪', label: 'KYC' },
+  { to: '/settings', icon: '⚙️', label: 'Ещё' },
+];
+
 export function App() {
+  const location = useLocation();
+  const showTabbar = !location.pathname.startsWith('/wallets/');
+
   return (
     <div>
       <div className="app">
         <Outlet />
       </div>
-      <nav className="tabbar">
-        <NavLink to="/wallets" onClick={() => hapticSelection()}>
-          <span className="icon">💼</span>
-          <span>Кошелёк</span>
-        </NavLink>
-        <NavLink to="/withdraw" onClick={() => hapticSelection()}>
-          <span className="icon">📤</span>
-          <span>Вывод</span>
-        </NavLink>
-        <NavLink to="/history" onClick={() => hapticSelection()}>
-          <span className="icon">📜</span>
-          <span>История</span>
-        </NavLink>
-        <NavLink to="/kyc" onClick={() => hapticSelection()}>
-          <span className="icon">🪪</span>
-          <span>KYC</span>
-        </NavLink>
-        <NavLink to="/settings" onClick={() => hapticSelection()}>
-          <span className="icon">⚙️</span>
-          <span>Настройки</span>
-        </NavLink>
-      </nav>
+      {showTabbar && (
+        <nav className="tabbar">
+          {TABS.map((t) => (
+            <NavLink key={t.to} to={t.to} onClick={() => hapticSelection()}>
+              <span className="icon">{t.icon}</span>
+              <span className="label">{t.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      )}
     </div>
   );
 }
