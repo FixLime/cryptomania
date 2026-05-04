@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import { Icon } from '../components/Icon';
 import { hapticImpact, hapticNotification, showAlert } from '../lib/telegram';
 
 const STATUS: Record<string, { text: string; cls: string; ico: string }> = {
-  NONE: { text: 'Не пройдена', cls: 'gray', ico: '○' },
+  NONE: { text: 'Не пройдена', cls: 'gray', ico: '🛡' },
   PENDING: { text: 'На проверке', cls: 'yellow', ico: '⏳' },
-  APPROVED: { text: 'Подтверждена', cls: 'green', ico: '✓' },
-  REJECTED: { text: 'Отклонена', cls: 'red', ico: '✕' },
+  APPROVED: { text: 'Подтверждена', cls: 'green', ico: '✅' },
+  REJECTED: { text: 'Отклонена', cls: 'red', ico: '❌' },
 };
 
 export function KYC() {
@@ -41,14 +43,12 @@ export function KYC() {
     try {
       await api.kycSubmit(fd);
       hapticNotification('success');
-      showAlert('Заявка отправлена на проверку');
+      showAlert('Заявка отправлена');
       await load();
     } catch (e: any) {
       hapticNotification('error');
       showAlert(`Ошибка: ${e.message}`);
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
 
   const s = STATUS[status] ?? STATUS.NONE;
@@ -56,22 +56,19 @@ export function KYC() {
 
   return (
     <div>
-      <div className="page-title">Верификация</div>
+      <div className="page-header">
+        <Link to="/settings" className="back"><Icon name="chevron-left" /></Link>
+        <div className="title">Верификация</div>
+      </div>
 
-      <div className="section" style={{padding:20, textAlign:'center'}}>
+      <div className="section" style={{padding:24, textAlign:'center'}}>
         <div style={{fontSize:48, marginBottom:8}}>{s.ico}</div>
         <span className={`badge ${s.cls}`}>{s.text}</span>
         {latest?.rejectReason && (
-          <div className="muted mt-12" style={{color:'var(--destructive)'}}>
-            Причина: {latest.rejectReason}
-          </div>
+          <div className="muted mt-12" style={{color:'var(--danger)'}}>{latest.rejectReason}</div>
         )}
-        {status === 'APPROVED' && (
-          <div className="muted mt-12">Вам доступны все функции кошелька</div>
-        )}
-        {status === 'PENDING' && (
-          <div className="muted mt-12">Обычно проверка занимает до 24 часов</div>
-        )}
+        {status === 'APPROVED' && <div className="muted mt-12">Все функции кошелька доступны</div>}
+        {status === 'PENDING' && <div className="muted mt-12">Проверка обычно занимает до 24 часов</div>}
       </div>
 
       {canSubmit && (
@@ -80,34 +77,29 @@ export function KYC() {
             <div className="form-label">ФИО как в документе</div>
             <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Иванов Иван Иванович" />
           </div>
-
           <div className="form-group">
             <div className="form-label">Тип документа</div>
             <select value={docType} onChange={(e) => setDocType(e.target.value)}>
               <option value="passport">Паспорт</option>
               <option value="id_card">ID-карта</option>
-              <option value="driver_license">Водительское удостоверение</option>
+              <option value="driver_license">Водительское</option>
             </select>
           </div>
-
           <div className="form-group">
             <div className="form-label">Номер документа</div>
             <input value={docNumber} onChange={(e) => setDocNumber(e.target.value)} placeholder="0000 000000" />
           </div>
-
           <div className="form-group">
             <div className="form-label">Фото документа</div>
             <input type="file" accept="image/*" onChange={(e) => { setDocFile(e.target.files?.[0] ?? null); hapticImpact('light'); }} />
             {docFile && <div className="muted mt-8">✓ {docFile.name}</div>}
           </div>
-
           <div className="form-group">
             <div className="form-label">Селфи с документом</div>
             <input type="file" accept="image/*" capture="user" onChange={(e) => { setSelfieFile(e.target.files?.[0] ?? null); hapticImpact('light'); }} />
             {selfieFile && <div className="muted mt-8">✓ {selfieFile.name}</div>}
           </div>
-
-          <div className="px-16 mt-16">
+          <div className="btn-fixed">
             <button className="btn" disabled={busy} onClick={submit}>
               {busy ? 'Отправка…' : 'Отправить на проверку'}
             </button>

@@ -6,6 +6,9 @@ import { meRoutes } from './routes/me.js';
 import { withdrawRoutes } from './routes/withdraw.js';
 import { kycRoutes } from './routes/kyc.js';
 import { adminRoutes } from './routes/admin.js';
+import { transferRoutes } from './routes/transfer.js';
+import { addressBookRoutes } from './routes/addressBook.js';
+import { settingsRoutes } from './routes/settings.js';
 
 const app = Fastify({
   logger: { transport: { target: 'pino-pretty', options: { colorize: true } } },
@@ -19,9 +22,11 @@ app.get('/health', async () => ({ ok: true, ts: Date.now() }));
 await app.register(meRoutes, { prefix: '/api' });
 await app.register(withdrawRoutes, { prefix: '/api' });
 await app.register(kycRoutes, { prefix: '/api' });
+await app.register(transferRoutes, { prefix: '/api' });
+await app.register(addressBookRoutes, { prefix: '/api' });
+await app.register(settingsRoutes, { prefix: '/api' });
 await app.register(adminRoutes, { prefix: '/api' });
 
-// JSON-сериализация BigInt (для blockNumber и т.п.)
 (BigInt.prototype as any).toJSON = function () { return this.toString(); };
 
 app

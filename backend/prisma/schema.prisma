@@ -31,8 +31,12 @@ enum Currency {
 enum TxType {
   DEPOSIT
   WITHDRAWAL
-  INTERNAL
+  INTERNAL_IN
+  INTERNAL_OUT
+  SWAP_IN
+  SWAP_OUT
   FEE
+  BONUS
 }
 
 enum TxStatus {
@@ -55,6 +59,13 @@ model User {
   status          UserStatus @default(ACTIVE)
   kycStatus       KycStatus  @default(NONE)
   isAdmin         Boolean    @default(false)
+  pinHash         String?
+  fiatCurrency    String     @default("USD")
+  hideBalances    Boolean    @default(false)
+  notifyDeposits  Boolean    @default(true)
+  notifyWithdrawals Boolean  @default(true)
+  referralCode    String     @unique @default(cuid())
+  referredById    String?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -63,9 +74,12 @@ model User {
   kycSubmissions  KycSubmission[]
   auditLogs       AuditLog[]   @relation("ActorLogs")
   targetedLogs    AuditLog[]   @relation("TargetLogs")
+  addressBook     AddressBookEntry[]
+  referredBy      User?        @relation("Referrals", fields: [referredById], references: [id])
+  referrals       User[]       @relation("Referrals")
 
   @@index([status])
-  @@index([kycStatus])
+  @@index([username])
 }
 
 model Wallet {
@@ -73,12 +87,9 @@ model Wallet {
   userId              String
   currency            Currency
   address             String
-  // Зашифрованный приватный ключ (AES-256-GCM): iv:tag:ciphertext в hex
   encryptedPrivateKey String?
-  // Для производных адресов (HD): derivation path
   derivationPath      String?
   balance             Decimal  @default(0) @db.Decimal(40, 18)
-  // Замороженный баланс (в pending выводах)
   lockedBalance       Decimal  @default(0) @db.Decimal(40, 18)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -100,15 +111,18 @@ model Transaction {
   currency        Currency
   amount          Decimal   @db.Decimal(40, 18)
   fee             Decimal   @default(0) @db.Decimal(40, 18)
-  // Для депозитов — наш адрес, для выводов — куда отправляем
   fromAddress     String?
   toAddress       String?
+  // Для INTERNAL_*: ID контрагента
+  counterpartyUserId String?
+  // Для SWAP_*: ID парной транзакции
+  pairedTxId      String?
   txHash          String?   @unique
   blockNumber     BigInt?
   confirmations   Int       @default(0)
-  // ID админа, одобрившего вывод (если вывод требовал одобрения)
   approvedById    String?
   rejectedReason  String?
+  note            String?
   metadata        Json?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -128,7 +142,6 @@ model KycSubmission {
   fullName      String
   documentType  String
   documentNumber String
-  // Пути к загруженным файлам (passport фото + selfie)
   documentPhotoPath String
   selfiePhotoPath   String
   reviewedById  String?
@@ -140,6 +153,19 @@ model KycSubmission {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status])
+}
+
+model AddressBookEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String
+  currency  Currency
+  address   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model AuditLog {

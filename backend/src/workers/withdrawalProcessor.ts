@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma.js';
 import { getAdapter } from '../crypto/index.js';
 import { audit } from '../services/auditService.js';
+import { tgNotify } from '../services/notify.js';
 
 export async function withdrawalProcessor() {
   const pending = await prisma.transaction.findMany({
@@ -43,6 +44,11 @@ export async function withdrawalProcessor() {
         entityId: tx.id,
         metadata: { txHash: result.txHash },
       });
+
+      const u = await prisma.user.findUnique({ where: { id: tx.userId } });
+      if (u?.notifyWithdrawals) {
+        tgNotify(u.telegramId, `📤 <b>Вывод выполнен</b>\n−${tx.amount} ${tx.currency.replace('_', ' ')}\n<code>${result.txHash}</code>`);
+      }
     } catch (e: any) {
       console.error('[withdrawalProcessor]', tx.id, e);
       await prisma.transaction.update({

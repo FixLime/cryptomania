@@ -3,6 +3,7 @@ import type { Currency } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { adapters, SUPPORTED_CURRENCIES } from '../crypto/index.js';
 import { audit } from '../services/auditService.js';
+import { tgNotify } from '../services/notify.js';
 
 export async function depositMonitor() {
   for (const currency of SUPPORTED_CURRENCIES) {
@@ -59,6 +60,11 @@ export async function depositMonitor() {
       });
 
       console.log(`[deposit] +${tx.amount} ${currency} -> user ${wallet.userId}`);
+
+      const u = await prisma.user.findUnique({ where: { id: wallet.userId } });
+      if (u?.notifyDeposits) {
+        tgNotify(u.telegramId, `💰 <b>+${tx.amount} ${currency.replace('_', ' ')}</b>\nДепозит зачислен`);
+      }
     }
   }
 }

@@ -7,22 +7,22 @@ const COLORS: Record<string, string> = {
 };
 
 const SYMBOLS: Record<string, string> = {
-  TON: '💎',
+  TON: '◆',
   USDT_TON: '₮',
   USDT_TRC20: '₮',
   ETH: 'Ξ',
   BTC: '₿',
 };
 
-export function CurrencyIcon({ currency, size = 40 }: { currency: string; size?: number }) {
+export function CurrencyIcon({ currency, size = 42 }: { currency: string; size?: number }) {
   return (
     <span
-      className="icon"
+      className="icon-circle"
       style={{
         background: COLORS[currency] ?? '#666',
         width: size,
         height: size,
-        fontSize: size * 0.5,
+        fontSize: size * 0.45,
       }}
     >
       {SYMBOLS[currency] ?? currency.slice(0, 1)}
@@ -40,7 +40,6 @@ export function currencyLabel(currency: string): string {
     default: return currency;
   }
 }
-
 export function currencyNetwork(currency: string): string {
   switch (currency) {
     case 'USDT_TON': return 'TON';
@@ -51,11 +50,7 @@ export function currencyNetwork(currency: string): string {
     default: return '';
   }
 }
-
 export function currencyTicker(currency: string): string {
-  switch (currency) {
-    case 'USDT_TON':
-    case 'USDT_TRC20': return 'USDT';
-    default: return currency;
-  }
+  if (currency.startsWith('USDT_')) return 'USDT';
+  return currency;
 }

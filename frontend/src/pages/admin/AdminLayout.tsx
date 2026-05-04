@@ -1,12 +1,13 @@
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { hapticSelection, hapticImpact } from '../../lib/telegram';
+import { Icon } from '../../components/Icon';
 
 const TABS = [
-  { to: '/admin', icon: '📊', label: 'Обзор', end: true },
-  { to: '/admin/kyc', icon: '🪪', label: 'KYC' },
-  { to: '/admin/withdrawals', icon: '↑', label: 'Выводы' },
-  { to: '/admin/users', icon: '👥', label: 'Юзеры' },
-  { to: '/admin/audit', icon: '📜', label: 'Аудит' },
+  { to: '/admin', icon: 'wallet' as const, label: 'Обзор', end: true },
+  { to: '/admin/kyc', icon: 'user' as const, label: 'KYC' },
+  { to: '/admin/withdrawals', icon: 'send' as const, label: 'Выводы' },
+  { to: '/admin/users', icon: 'search' as const, label: 'Юзеры' },
+  { to: '/admin/audit', icon: 'history' as const, label: 'Аудит' },
 ];
 
 export function AdminLayout() {
@@ -14,7 +15,7 @@ export function AdminLayout() {
     <div>
       <div className="app">
         <div className="page-header">
-          <Link to="/" onClick={() => hapticImpact('light')} className="back">‹</Link>
+          <Link to="/" onClick={() => hapticImpact('light')} className="back"><Icon name="chevron-left" /></Link>
           <div className="title">🛡 Админ</div>
         </div>
         <Outlet />
@@ -22,8 +23,12 @@ export function AdminLayout() {
       <nav className="tabbar">
         {TABS.map((t) => (
           <NavLink key={t.to} to={t.to} end={t.end} onClick={() => hapticSelection()}>
-            <span className="icon">{t.icon}</span>
-            <span className="label">{t.label}</span>
+            {({ isActive }) => (
+              <>
+                <span className="ico"><Icon name={t.icon} size={20} color={isActive ? 'var(--accent)' : 'var(--hint)'} /></span>
+                <span>{t.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>

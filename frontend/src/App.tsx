@@ -1,19 +1,22 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { hapticSelection } from './lib/telegram';
+import { Icon } from './components/Icon';
 
 const TABS = [
-  { to: '/wallets', icon: '💼', label: 'Кошелёк' },
-  { to: '/history', icon: '🕐', label: 'История' },
-  { to: '/kyc', icon: '🪪', label: 'KYC' },
-  { to: '/settings', icon: '⚙️', label: 'Ещё' },
+  { to: '/wallets', icon: 'wallet' as const, label: 'Кошелёк' },
+  { to: '/swap', icon: 'swap' as const, label: 'Обмен' },
+  { to: '/history', icon: 'history' as const, label: 'История' },
+  { to: '/settings', icon: 'settings' as const, label: 'Профиль' },
 ];
+
+const HIDE_TABBAR_PREFIXES = ['/wallets/', '/send', '/receive/', '/tx/', '/security', '/address-book', '/referral', '/kyc'];
 
 export function App() {
   const location = useLocation();
-  const showTabbar = !location.pathname.startsWith('/wallets/');
+  const showTabbar = !HIDE_TABBAR_PREFIXES.some((p) => location.pathname.startsWith(p));
 
   return (
-    <div>
+    <>
       <div className="app">
         <Outlet />
       </div>
@@ -21,12 +24,16 @@ export function App() {
         <nav className="tabbar">
           {TABS.map((t) => (
             <NavLink key={t.to} to={t.to} onClick={() => hapticSelection()}>
-              <span className="icon">{t.icon}</span>
-              <span className="label">{t.label}</span>
+              {({ isActive }) => (
+                <>
+                  <span className="ico"><Icon name={t.icon} size={22} color={isActive ? 'var(--accent)' : 'var(--hint)'} /></span>
+                  <span>{t.label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
       )}
-    </div>
+    </>
   );
 }
